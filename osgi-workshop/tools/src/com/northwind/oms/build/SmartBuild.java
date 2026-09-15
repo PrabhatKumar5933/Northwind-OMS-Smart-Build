@@ -88,7 +88,8 @@ public final class SmartBuild {
             return;
         }
 
-        Set<String> selected = impacted(modules, changed);
+        Set<String> impactedModules = impacted(modules, changed);
+        Set<String> selected = selectedForBuild(modules, impactedModules);
         System.out.println("\n[SMART-BUILD] Impact analysis (changed module -> downstream dependents):");
         for (String c : changed) {
             System.out.println("  " + c);

@@ -64,9 +64,8 @@ jobs:
 
           echo "Base reference: $BASE_REF"
 
-          CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$GITHUB_SHA" -- osgi-workshop \
-            | sed 's#^osgi-workshop/##' \
-            | paste -sd, -)
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$GITHUB_SHA" -- . \
+                      | paste -sd, -)
 
           echo "Changed files:"
           echo "$CHANGED_FILES"
@@ -85,9 +84,8 @@ jobs:
           name: northwind-full-build
           path: |
             osgi-workshop/full-build.log
-            osgi-workshop/*.dot
-            osgi-workshop/docs/*.dot
-            osgi-workshop/docs/*.svg
+            osgi-workshop/docs/full-build-graph.dot
+            osgi-workshop/docs/full-build-graph.svg
           if-no-files-found: warn
 
       - name: Upload Changed Build Artifacts
@@ -97,7 +95,6 @@ jobs:
           name: northwind-changed-build
           path: |
             osgi-workshop/changed-build.log
-            osgi-workshop/*.dot
-            osgi-workshop/docs/*.dot
-            osgi-workshop/docs/*.svg
+            osgi-workshop/docs/changed-build-graph.dot
+            osgi-workshop/docs/changed-build-graph.svg
           if-no-files-found: warn
