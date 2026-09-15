@@ -64,9 +64,8 @@ jobs:
 
           echo "Base reference: $BASE_REF"
 
-          CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$GITHUB_SHA" -- osgi-workshop \
-            | sed 's#^osgi-workshop/##' \
-            | paste -sd, -)
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$GITHUB_SHA" -- . \
+                      | paste -sd, -)
 
           echo "Changed files:"
           echo "$CHANGED_FILES"
