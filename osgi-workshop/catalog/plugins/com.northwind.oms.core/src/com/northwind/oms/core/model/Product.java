@@ -35,3 +35,4 @@ public final class Product {
         return sku + " (" + displayName + ")";
     }
 }
+// Smart build test change
