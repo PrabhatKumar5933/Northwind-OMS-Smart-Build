@@ -88,7 +88,7 @@ public final class SmartBuild {
             return;
         }
 
-        Set<String> selected = selectedForBuild(modules, changed);
+        Set<String> selected = impacted(modules, changed);
         System.out.println("\n[SMART-BUILD] Impact analysis (changed module -> downstream dependents):");
         for (String c : changed) {
             System.out.println("  " + c);
@@ -245,25 +245,7 @@ static Set<String> selectedForBuild(Map<String,Module> m, Set<String> changed) {
 
     // First find all downstream modules impacted by the changes.
     Set<String> selected = impacted(m,changed);
-
-    // Then include all upstream dependencies required to build
-    // the selected modules successfully in the Maven reactor.
-    Deque<String> queue = new ArrayDeque<>(selected);
-
-    while(!queue.isEmpty()){
-        String id = queue.poll();
-        Module mod = m.get(id);
-
-        if(mod == null) continue;
-
-        for(String dependency : mod.dependencies){
-            if(m.containsKey(dependency) && selected.add(dependency)){
-                queue.add(dependency);
-            }
-        }
-    }
-
-    return selected;
+        return selected;
 }
 
     static String moduleForFile(Map<String,Module> m,String file){
