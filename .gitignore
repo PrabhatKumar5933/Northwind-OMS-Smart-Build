@@ -1,0 +1,9 @@
+# Maven/Tycho build output
+**/target/
+
+# Java compiled output
+*.class
+
+# IDE files
+.idea/
+.vscode/

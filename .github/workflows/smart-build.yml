@@ -1,0 +1,103 @@
+name: Northwind OMS Smart Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Build mode"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - changed
+      base_ref:
+        description: "Base commit/ref for changed build"
+        required: false
+        default: "HEAD^"
+
+  push:
+
+  pull_request:
+
+jobs:
+  smart-build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: osgi-workshop
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          cache-dependency-path: osgi-workshop/pom.xml
+
+      - name: Make build script executable
+        run: chmod +x build.sh
+
+      - name: Run Full Build
+        if: >
+          github.event_name == 'push' ||
+          (github.event_name == 'workflow_dispatch' && inputs.mode == 'all')
+        run: |
+          set -o pipefail
+          ./build.sh --all --dot 2>&1 | tee full-build.log
+
+      - name: Run Changed Build
+        if: >
+          github.event_name == 'pull_request' ||
+          (github.event_name == 'workflow_dispatch' && inputs.mode == 'changed')
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || inputs.base_ref }}
+        run: |
+          set -o pipefail
+
+          echo "Base reference: $BASE_REF"
+
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$GITHUB_SHA" -- osgi-workshop \
+            | sed 's#^osgi-workshop/##' \
+            | paste -sd, -)
+
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No changed files detected."
+            exit 0
+          fi
+
+          ./build.sh --changed --dot --files "$CHANGED_FILES" 2>&1 | tee changed-build.log
+
+      - name: Upload Full Build Artifacts
+        if: always() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'all'))
+        uses: actions/upload-artifact@v4
+        with:
+          name: northwind-full-build
+          path: |
+            osgi-workshop/full-build.log
+            osgi-workshop/*.dot
+            osgi-workshop/docs/*.dot
+            osgi-workshop/docs/*.svg
+          if-no-files-found: warn
+
+      - name: Upload Changed Build Artifacts
+        if: always() && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'changed'))
+        uses: actions/upload-artifact@v4
+        with:
+          name: northwind-changed-build
+          path: |
+            osgi-workshop/changed-build.log
+            osgi-workshop/*.dot
+            osgi-workshop/docs/*.dot
+            osgi-workshop/docs/*.svg
+          if-no-files-found: warn
